@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Etiketten-Drucker</title>
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=16">
 <style id="seitenformat"></style>
 </head>
 <body>
@@ -60,7 +60,7 @@
 
       <div class="karte">
         <h2>Format &amp; Anzahl</h2>
-        <p class="festformat" id="festFormat" hidden>Format: <b>Breite 62 mm</b> (Rolle) · <b>Höhe automatisch</b> je nach Inhalt, mindestens 63 mm</p>
+        <p class="festformat" id="festFormat" hidden>Format: <b>Breite 62 mm</b> (Rolle) · <b>Höhe automatisch</b> je nach Inhalt</p>
         <div class="zeile" id="formatWahl">
           <label>Etikettenlänge
             <select id="hoehe">
@@ -99,15 +99,17 @@
         <div id="vorschauFlaeche"><div id="vorschauSkala"></div></div>
         <p class="tipp" id="vorschauInfo"></p>
         <button id="drucken" class="drucken">Drucken</button>
+        <p class="druckstatus" id="druckStatus" role="status" hidden></p>
+        <p class="tipp" id="druckerInfo"></p>
         <details>
-          <summary>Druck-Einstellungen (einmalig prüfen)</summary>
-          <ol>
-            <li>Ziel/Drucker: <b>Brother QL-800</b></li>
-            <li>Ränder: <b>Keine</b> · Skalierung: <b>100 %</b> (bzw. „Tatsächliche Größe“)</li>
-            <li><b>Kopf- und Fußzeilen</b> ausschalten</li>
-            <li>In den Brother-Druckeinstellungen: „Automatisch schneiden“ <b>alle 1 Etikett(en)</b></li>
-          </ol>
-          <p>Am besten in Google Chrome oder Microsoft Edge drucken.</p>
+          <summary>Hilfe &amp; Notweg</summary>
+          <ul>
+            <li>Der Drucker muss per <b>USB</b> angeschlossen und eingeschaltet sein.</li>
+            <li>Die grüne Lampe <b>„Editor Lite“</b> muss <b>aus</b> sein (Taste gedrückt halten, bis sie ausgeht).</li>
+            <li>Beim ersten Mal fragt Chrome nach dem Drucker: <b>QL-800</b> wählen und <b>Verbinden</b> klicken.</li>
+          </ul>
+          <button id="druckenDialog" class="zweitrangig" type="button">Über Druckdialog drucken</button>
+          <p>Notweg ohne Direktdruck. Dabei ist das Etikett mindestens 63 mm lang, und der Mac-Treiber kann zusätzliche Ränder hinzufügen.</p>
         </details>
       </div>
     </section>
@@ -116,6 +118,8 @@
 
 <div id="druckbereich" aria-hidden="true"></div>
 
-<script src="app.js?v=15"></script>
+<script src="usb.js?v=16"></script>
+<script src="render.js?v=16"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

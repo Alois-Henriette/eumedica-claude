@@ -100,7 +100,13 @@ code { font-size: 12px; }
 }
 .drucken:hover { filter: brightness(1.08); }
 details { font-size: 13px; color: var(--leise); }
-details ol { padding-left: 20px; margin: 8px 0; }
+details ol, details ul { padding-left: 20px; margin: 8px 0; }
+.drucken:disabled { opacity: .6; cursor: progress; }
+.druckstatus { margin: 0 0 8px; padding: 8px 10px; border-radius: 6px; background: var(--bg); font-size: 14px; }
+.druckstatus.ok { color: #1e7d3c; }
+.druckstatus.fehler { color: #c0392b; }
+.zweitrangig { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 6px; cursor: pointer;
+  background: transparent; color: var(--text); border: 1px solid var(--rand); }
 summary { cursor: pointer; }
 
 #vorschauFlaeche {

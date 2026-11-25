@@ -162,8 +162,9 @@
   function istQuer() { return format().ausrichtung === 'quer'; }
 
   var AUTO_S = 1.4;          // Grund-Schriftgröße bei automatischer Höhe
-  // Chrome/macOS drehen Seiten, die breiter als hoch sind, ins Querformat – der Brother-Treiber
-  // druckt sie dann um 90° gedreht. Deshalb ist jedes Etikett mindestens so lang wie die Rolle breit.
+  // Nur für den Notweg über den Druckdialog: Chrome/macOS drehen Seiten, die breiter als hoch sind,
+  // ins Querformat – der Brother-Treiber druckt sie dann um 90° gedreht. Dort daher mindestens 63 mm.
+  // Der USB-Direktdruck braucht das nicht und druckt genau so lang wie der Inhalt.
   var MIN_LAENGE = 63;
   var letzteAutoHoehe = 40;  // zuletzt gemessene Höhe in mm
 
@@ -260,6 +261,7 @@
       });
     });
     $('drucken').addEventListener('click', drucken);
+    $('druckenDialog').addEventListener('click', druckenDialog);
     window.addEventListener('resize', vorschauSkalieren);
   }
 
@@ -404,15 +406,10 @@
         if (mehrzeilig[m].scrollWidth > mehrzeilig[m].clientWidth + 0.5) etikett.classList.add('umbruch');
       }
       var mm = etikett.getBoundingClientRect().height * 25.4 / 96;
-      var h = Math.ceil(mm * 2) / 2;
-      if (h >= MIN_LAENGE) {
-        etikett.style.height = h + 'mm';
-        etikett.dataset.hoehe = h;
-        return AUTO_S;
-      }
-      // Zu kurz: Mindestlänge nehmen, Schrift bleibt gleich groß, Text steht oben.
-      etikett.style.height = MIN_LAENGE + 'mm';
-      etikett.dataset.hoehe = MIN_LAENGE;
+      // Genau so lang wie der Inhalt (USB-Direktdruck); mindestens 13 mm (Drucker-Minimum).
+      var h = Math.max(13, Math.ceil(mm * 2) / 2);
+      etikett.style.height = h + 'mm';
+      etikett.dataset.hoehe = h;
       return AUTO_S;
     }
     // Größten Faktor suchen, damit der Text das Etikett möglichst ausfüllt.
@@ -482,12 +479,13 @@
   }
 
   // ---------- Drucken ----------
-  function drucken() {
+  // Alle Etiketten im (unsichtbaren) Druckbereich setzen.
+  function etikettenSetzen(fuerDialog) {
     var anzahl = Math.min(500, Math.max(1, parseInt(zustand.anzahl, 10) || 1));
     var bereich = $('druckbereich');
     bereich.innerHTML = '';
     for (var i = 0; i < anzahl; i++) {
-      // Jede Druckseite ist ein Stück Rolle: 62 mm breit, Länge = gewählte Höhe bzw. Breite.
+      // Jede Druckseite ist ein Stück Rolle: 62 mm breit, Länge = Höhe des Etiketts.
       var seite = document.createElement('div');
       seite.className = 'seite';
       seite.style.width = BREITE_MM + 'mm';
@@ -496,21 +494,75 @@
       seite.appendChild(e);
       bereich.appendChild(seite);
       einpassen(e);
+      if (format().auto) seite.style.height = e.style.height;
     }
-    if (format().auto) {
-      // Alle Etiketten bekommen die Höhe des längsten (eine Seitengröße pro Druckauftrag).
+    if (format().auto && fuerDialog) {
+      // Druckdialog: eine Seitengröße pro Auftrag, mindestens MIN_LAENGE (siehe oben).
       var max = MIN_LAENGE;
       bereich.querySelectorAll('.etikett').forEach(function (el) { max = Math.max(max, parseFloat(el.dataset.hoehe) || MIN_LAENGE); });
-      letzteAutoHoehe = max;
       bereich.querySelectorAll('.seite, .etikett').forEach(function (el) { el.style.height = max + 'mm'; });
       $('seitenformat').textContent = '@page { size: ' + BREITE_MM + 'mm ' + max + 'mm; margin: 0; }';
     }
-    // Erst drucken, wenn alle Logo-Bilder geladen sind.
-    var bilder = Array.prototype.map.call(bereich.querySelectorAll('img'), function (img) {
+    // Warten, bis Logo und Schriften geladen sind.
+    var warten = Array.prototype.map.call(bereich.querySelectorAll('img'), function (img) {
       return img.decode ? img.decode().catch(function () {}) : Promise.resolve();
     });
-    Promise.all(bilder).then(function () { window.print(); });
+    if (document.fonts && document.fonts.ready) warten.push(document.fonts.ready);
+    return Promise.all(warten).then(function () { return bereich; });
   }
+
+  function status(text, art) {
+    var el = $('druckStatus');
+    el.textContent = text;
+    el.className = 'druckstatus' + (art ? ' ' + art : '');
+    el.hidden = !text;
+  }
+
+  // Normaler Weg: direkt per USB an den QL-800.
+  function drucken() {
+    if (!window.BrotherQL || !BrotherQL.verfuegbar()) {
+      status('Dieser Browser kann nicht direkt drucken. Bitte Google Chrome oder Microsoft Edge verwenden – oder „Über Druckdialog drucken“.', 'fehler');
+      return;
+    }
+    var knopf = $('drucken');
+    knopf.disabled = true;
+    status('Verbinde mit dem Drucker …');
+    // Zuerst verbinden (Chrome fragt beim ersten Mal nach dem Drucker – das muss direkt nach dem Klick passieren).
+    BrotherQL.verbinden(true)
+      .then(function (d) {
+        if (!d) throw new Error('Kein Drucker ausgewählt.');
+        status('Drucke …');
+        return etikettenSetzen(false);
+      })
+      .then(function (bereich) {
+        var seiten = Array.prototype.map.call(bereich.querySelectorAll('.etikett'), function (e) {
+          return BrotherQL.canvasZuSeite(EtikettRender.etikettZuCanvas(e));
+        });
+        bereich.innerHTML = '';
+        return BrotherQL.drucken(seiten);
+      })
+      .then(function (meldung) { status('✓ ' + meldung, 'ok'); druckerAnzeigen(); })
+      .catch(function (e) { status((e && e.message) || 'Drucken fehlgeschlagen.', 'fehler'); druckerAnzeigen(); })
+      .then(function () { knopf.disabled = false; });
+  }
+
+  // Notweg: Druckdialog des Browsers.
+  function druckenDialog() {
+    etikettenSetzen(true).then(function () { window.print(); });
+  }
+
+  function druckerAnzeigen() {
+    if (!window.BrotherQL || !BrotherQL.verfuegbar()) {
+      $('druckerInfo').textContent = 'Direktdruck nur in Chrome oder Edge möglich.';
+      return;
+    }
+    BrotherQL.bekanntesGeraet().then(function (d) {
+      $('druckerInfo').textContent = d
+        ? 'Drucker: ' + (d.productName || 'Brother QL') + ' – bereit.'
+        : 'Beim ersten Drucken fragt Chrome nach dem Drucker: „QL-800“ auswählen und „Verbinden“ klicken.';
+    }).catch(function () {});
+  }
+
   window.addEventListener('afterprint', function () { $('druckbereich').innerHTML = ''; });
 
   // ---------- Start ----------
@@ -518,6 +570,7 @@
   felderBauen();
   einstellungenVerbinden();
   aktualisieren();
+  druckerAnzeigen();
   // Schriften vorab laden, danach neu einpassen (Textbreiten ändern sich mit der Schrift).
   if (document.fonts && document.fonts.load) {
     Promise.all(['400 10px "Courier Prime"', '700 10px "Courier Prime"', 'italic 400 10px "Courier Prime"',

@@ -16,6 +16,8 @@
 - Braunfläschchen-Etikett: Breite fest (Rolle 62 mm, bedruckt ca. 59 mm), nicht verstellbar. Höhe automatisch je nach Menge der Inhaltsstoffe, feste Schriftgröße, Titel immer einzeilig, schmale Ränder oben/unten (Nutzerwunsch). Bedienung so einfach wie möglich halten.
 - Reines HTML/CSS/JS ohne Build-Schritt und ohne externe Abhängigkeiten. Schriften liegen lokal in `fonts/`.
 - Neue Etiketten-Arten in `app.js` unter `VORLAGEN` ergänzen (erscheinen automatisch im Umschalter).
-- Jedes Etikett ist mindestens 63 mm lang (`MIN_LAENGE`): Chrome/macOS drehen Seiten, die breiter als hoch sind, ins Querformat, und der Brother-Treiber druckt sie dann um 90° gedreht (vom Nutzer beim Probedruck bestätigt). Schriftgröße ist immer gleich (Nutzerwunsch, nicht vergrößern/verkleinern); kurzer Inhalt steht oben, Rest bleibt frei.
+- **Drucken = USB-Direktdruck (WebUSB)** in `usb.js` (Brother-Rasterbefehle, byte-identisch zur Bibliothek brother_ql für QL-800/62 mm geprüft) und `render.js` (Etikett → 300-dpi-Bild). Etikett wird genau so lang wie der Inhalt und abgeschnitten. Schriftgröße immer gleich (Nutzerwunsch).
+- Notweg „Über Druckdialog drucken“: dort mindestens 63 mm (`MIN_LAENGE`), weil Chrome/macOS kürzere Seiten ins Querformat drehen und der Brother-Treiber eigene Ränder hinzufügt (vom Nutzer beim Probedruck bestätigt).
+- Test der Druckdaten: `pip install brother_ql`, dann `brother_ql analyze datei.bin` erzeugt Bilder der gedruckten Etiketten.
 - Kein QR-Code und kein Barcode (vom Nutzer nicht gewünscht).
 - Keine Daten an Server schicken; Eingaben bleiben im Browser (localStorage).

@@ -19,18 +19,16 @@ Weitere Arten lassen sich in `app.js` unter `VORLAGEN` ergänzen.
 1. Ordner `etiketten-drucker` herunterladen (z. B. über „Code → Download ZIP“ auf GitHub).
 2. `index.html` per Doppelklick in **Google Chrome** oder **Microsoft Edge** öffnen.
 
-## Einmalig: Drucker einrichten
+## Drucken
 
-1. Brother-Treiber für den QL-800 installieren (support.brother.com).
-2. Den Schalter „Editor Lite“ am Drucker **ausschalten** (die grüne Lampe ist aus).
-3. Im Druckdialog des Browsers:
-   - Drucker: **Brother QL-800**
-   - Ränder: **Keine**
-   - Skalierung: **Standard / 100 %**
-   - **Kopf- und Fusszeilen** ausschalten
-4. In den Brother-Druckeinstellungen „Automatisch schneiden“ auf **alle 1 Etikett(en)** stellen.
+Die App druckt **direkt über USB** auf den QL-800 (Chrome oder Edge). Mac-Druckfenster und Treiber-Einstellungen sind dafür nicht nötig.
+Das Etikett wird genau so lang wie der Inhalt und danach automatisch abgeschnitten.
 
-Falls die Etikettenlänge nicht stimmt: In den Druckeinstellungen des Brother-Treibers als Papierformat „62 mm“ (Endlos) wählen bzw. ein eigenes Format mit der gewünschten Länge anlegen.
+1. Den Drucker per USB anschliessen und einschalten.
+2. Die Taste **„Editor Lite“** gedrückt halten, bis die grüne Lampe **aus** ist.
+3. Auf **Drucken** klicken. Beim ersten Mal fragt Chrome nach dem Drucker: **QL-800** wählen und auf **Verbinden** klicken.
+
+Notweg: Unter „Hilfe & Notweg“ wird über den normalen Druckdialog gedruckt. Dabei ist das Etikett mindestens 63 mm lang, und der Treiber kann Ränder hinzufügen.
 
 ## Funktionen
 
