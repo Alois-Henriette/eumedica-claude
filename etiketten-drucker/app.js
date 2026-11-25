@@ -10,7 +10,7 @@
   var VORLAGEN = {
     flaeschchen: {
       titel: 'Braunfläschchen',
-      einstellungen: { hoehe: '38' },
+      einstellungen: { ausrichtung: 'quer', hoehe: '60' },
       felder: [
         { id: 'name', label: 'Titel', placeholder: 'z. B. Arnika-Öl', standard: 'Arnika-Öl' },
         { id: 'listenTitel', label: 'Überschrift der Liste', placeholder: 'z. B. Inhaltsstoffe:', standard: 'Inhaltsstoffe:' },
@@ -40,7 +40,7 @@
     },
     paket: {
       titel: 'Paketversand',
-      einstellungen: { hoehe: '100' },
+      einstellungen: { ausrichtung: 'hoch', hoehe: '100' },
       felder: [
         { id: 'absender', label: 'Absender (eine Zeile)', placeholder: 'z. B. Alois & Henriette group · Musterstr. 1 · 8000 Zürich',
           standard: 'Alois & Henriette group · Musterstrasse 1 · 8000 Zürich' },
@@ -59,7 +59,7 @@
     },
     freitext: {
       titel: 'Freitext',
-      einstellungen: { hoehe: '30' },
+      einstellungen: { ausrichtung: 'hoch', hoehe: '30' },
       felder: [
         { id: 'ueberschrift', label: 'Überschrift', placeholder: 'z. B. Muster' },
         { id: 'text', label: 'Text', typ: 'textarea', placeholder: 'Beliebiger Text, mehrere Zeilen möglich' },
@@ -119,7 +119,8 @@
     logoBild: '',         // Data-URL einer hochgeladenen Datei
     logoGroesse: '6',     // Höhe in mm
     schrift: 'schreibmaschine',
-    hoehe: '38',
+    hoehe: '60',
+    ausrichtung: 'quer',
     freiHoehe: 35,
     anzahl: 1,
     start: 1,
@@ -133,10 +134,12 @@
   if (!VORLAGEN[zustand.vorlage]) zustand.vorlage = 'flaeschchen';
   if (zustand.logoArt === 'text') zustand.logoArt = 'original';
   // Das Format wird je Etiketten-Art getrennt gemerkt.
-  var PRO_VORLAGE = ['hoehe', 'freiHoehe'];
+  var PRO_VORLAGE = ['ausrichtung', 'hoehe', 'freiHoehe'];
   zustand.proVorlage = zustand.proVorlage || {};
   Object.keys(VORLAGEN).forEach(function (k) {
-    zustand.proVorlage[k] = Object.assign({ freiHoehe: 35 }, VORLAGEN[k].einstellungen, zustand.proVorlage[k]);
+    var alt = zustand.proVorlage[k];
+    if (alt && !alt.ausrichtung) alt = null; // ältere Version: neue Standardwerte übernehmen
+    zustand.proVorlage[k] = Object.assign({ freiHoehe: 35 }, VORLAGEN[k].einstellungen, alt);
   });
   PRO_VORLAGE.forEach(function (p) { zustand[p] = zustand.proVorlage[zustand.vorlage][p]; });
   Object.keys(VORLAGEN).forEach(function (k) {
@@ -231,7 +234,7 @@
       if (ev.target.files && ev.target.files[0]) logoLaden(ev.target.files[0]);
       ev.target.value = '';
     });
-    [['logoArt', 'value'], ['logoGroesse', 'value'], ['schrift', 'value'], ['hoehe', 'value'], ['freiHoehe', 'value'],
+    [['logoArt', 'value'], ['logoGroesse', 'value'], ['schrift', 'value'], ['ausrichtung', 'value'], ['hoehe', 'value'], ['freiHoehe', 'value'],
      ['anzahl', 'value'], ['start', 'value'], ['stellen', 'value'], ['rahmen', 'checked']].forEach(function (p) {
       var el = $(p[0]);
       el[p[1]] = zustand[p[0]];
@@ -261,7 +264,10 @@
 
     var div = document.createElement('div');
     div.className = 'etikett schrift-' + zustand.schrift + (zustand.rahmen ? ' mit-rahmen' : '');
-    div.style.height = hoeheMm() + 'mm';
+    var quer = zustand.ausrichtung === 'quer';
+    if (quer) div.classList.add('quer');
+    div.style.width = (quer ? hoeheMm() : BREITE_MM) + 'mm';
+    div.style.height = (quer ? BREITE_MM : hoeheMm()) + 'mm';
 
     var html = zustand.rahmen ? '<div class="rahmen"></div>' : '';
     html += '<div class="inhalt"><div class="textspalte"><div class="stapel">' +
@@ -365,7 +371,10 @@
     $('logoHinweis').hidden = !(zustand.logoArt === 'bild' && !zustand.logoBild);
     $('logoDateiLabel').hidden = zustand.logoArt !== 'bild';
     var h = hoeheMm();
-    $('masse').textContent = '· ' + BREITE_MM + ' × ' + h + ' mm';
+    var quer = zustand.ausrichtung === 'quer';
+    $('laengeText').textContent = quer ? 'Etikettenbreite' : 'Etikettenhöhe';
+    $('freiText').textContent = quer ? 'Eigene Breite' : 'Eigene Höhe';
+    $('masse').textContent = '· ' + (quer ? h + ' mm breit × ' + BREITE_MM + ' mm hoch' : BREITE_MM + ' mm breit × ' + h + ' mm hoch');
     $('seitenformat').textContent = '@page { size: ' + BREITE_MM + 'mm ' + h + 'mm; margin: 0; }';
 
     var box = $('vorschauSkala');
@@ -379,7 +388,8 @@
     var info = anzahl === 1 ? '1 Etikett wird gedruckt.' : anzahl + ' Etiketten werden gedruckt.';
     var nutztNr = JSON.stringify(zustand.werte[zustand.vorlage]).indexOf('{nr}') >= 0;
     if (nutztNr && anzahl > 1) info += ' Nummern ' + nummer(0) + ' bis ' + nummer(anzahl - 1) + '.';
-    if (s < 0.7) info += ' Hinweis: Der Text wurde stark verkleinert. Etikett höher wählen oder Text kürzen.';
+    if (quer) info += ' Wird quer auf die Rolle gedruckt.';
+    if (s < 0.7) info += ' Hinweis: Der Text wurde stark verkleinert. Etikett größer wählen oder Text kürzen.';
     $('vorschauInfo').textContent = info;
   }
 
@@ -400,8 +410,14 @@
     var bereich = $('druckbereich');
     bereich.innerHTML = '';
     for (var i = 0; i < anzahl; i++) {
+      // Jede Druckseite ist ein Stück Rolle: 62 mm breit, Länge = gewählte Höhe bzw. Breite.
+      var seite = document.createElement('div');
+      seite.className = 'seite';
+      seite.style.width = BREITE_MM + 'mm';
+      seite.style.height = hoeheMm() + 'mm';
       var e = etikettErzeugen(i);
-      bereich.appendChild(e);
+      seite.appendChild(e);
+      bereich.appendChild(seite);
       einpassen(e);
     }
     // Erst drucken, wenn alle Logo-Bilder geladen sind.

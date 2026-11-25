@@ -128,6 +128,12 @@ summary { cursor: pointer; }
   border: 0.25mm solid #000; border-radius: 1.2mm;
 }
 .etikett.mit-rahmen { padding: 2mm 3.4mm; }
+/* Quer gedruckt: die nicht bedruckbaren Rollenränder liegen oben und unten */
+.etikett.quer { padding: 2.8mm 1.6mm; }
+.etikett.quer.mit-rahmen { padding: 3.4mm 2mm; }
+.etikett.quer.mit-rahmen .rahmen { inset: 1.8mm 0.8mm; }
+.seite { position: relative; overflow: hidden; }
+.seite > .etikett.quer { position: absolute; top: 0; left: 0; transform-origin: 0 0; transform: translateX(62mm) rotate(90deg); }
 .inhalt {
   --s: 1;
   height: 100%;
@@ -165,8 +171,8 @@ summary { cursor: pointer; }
   html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
   #app { display: none !important; }
   #druckbereich { position: static; left: auto; }
-  #druckbereich .etikett { break-after: page; page-break-after: always; }
-  #druckbereich .etikett:last-child { break-after: auto; page-break-after: auto; }
+  #druckbereich .seite { break-after: page; page-break-after: always; }
+  #druckbereich .seite:last-child { break-after: auto; page-break-after: auto; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
