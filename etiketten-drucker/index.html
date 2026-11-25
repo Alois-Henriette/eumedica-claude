@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Etiketten-Drucker</title>
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 <style id="seitenformat"></style>
 </head>
 <body>
@@ -60,22 +60,19 @@
 
       <div class="karte">
         <h2>Format &amp; Anzahl</h2>
-        <p class="festformat" id="festFormat" hidden>Format: <b>Breite 62 mm</b> (Rolle) · <b>Höhe automatisch</b> je nach Inhalt</p>
+        <p class="festformat" id="festFormat" hidden>Format: <b>Breite 62 mm</b> (Rolle) · <b>Höhe automatisch</b> je nach Inhalt, mindestens 63 mm</p>
         <div class="zeile" id="formatWahl">
           <label>Etikettenlänge
             <select id="hoehe">
-              <option value="20">20 mm</option>
-              <option value="25">25 mm</option>
-              <option value="30">30 mm</option>
-              <option value="38">38 mm</option>
-              <option value="50">50 mm</option>
-              <option value="62">62 mm</option>
+              <option value="63">63 mm</option>
+              <option value="75">75 mm</option>
               <option value="100">100 mm</option>
+              <option value="150">150 mm</option>
               <option value="frei">Eigene …</option>
             </select>
           </label>
           <label id="freiHoeheLabel" hidden>Eigene Länge (mm)
-            <input id="freiHoehe" type="number" min="13" max="300" step="1" value="35">
+            <input id="freiHoehe" type="number" min="63" max="300" step="1" value="35">
           </label>
         </div>
         <label>Anzahl Etiketten
@@ -119,6 +116,6 @@
 
 <div id="druckbereich" aria-hidden="true"></div>
 
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

@@ -16,5 +16,6 @@
 - Braunfläschchen-Etikett: Breite fest (Rolle 62 mm, bedruckt ca. 59 mm), nicht verstellbar. Höhe automatisch je nach Menge der Inhaltsstoffe, feste Schriftgröße, Titel immer einzeilig, schmale Ränder oben/unten (Nutzerwunsch). Bedienung so einfach wie möglich halten.
 - Reines HTML/CSS/JS ohne Build-Schritt und ohne externe Abhängigkeiten. Schriften liegen lokal in `fonts/`.
 - Neue Etiketten-Arten in `app.js` unter `VORLAGEN` ergänzen (erscheinen automatisch im Umschalter).
+- Jedes Etikett ist mindestens 63 mm lang (`MIN_LAENGE`): Chrome/macOS drehen Seiten, die breiter als hoch sind, ins Querformat, und der Brother-Treiber druckt sie dann um 90° gedreht (vom Nutzer beim Probedruck bestätigt). Kurzer Inhalt wird stattdessen größer gesetzt.
 - Kein QR-Code und kein Barcode (vom Nutzer nicht gewünscht).
 - Keine Daten an Server schicken; Eingaben bleiben im Browser (localStorage).
