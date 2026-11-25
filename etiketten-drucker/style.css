@@ -121,7 +121,7 @@ summary { cursor: pointer; }
   position: relative;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   /* Brother-Rolle: seitlich ca. 1,5 mm nicht bedruckbar */
-  padding: 1.6mm 2.8mm;
+  padding: 1mm 2.8mm;
 }
 .etikett.mit-rahmen .rahmen {
   position: absolute; inset: 0.8mm 1.8mm;
@@ -129,9 +129,9 @@ summary { cursor: pointer; }
 }
 .etikett.mit-rahmen { padding: 2mm 3.4mm; }
 /* Quer gedruckt: die nicht bedruckbaren Rollenränder liegen oben und unten */
-.etikett.quer { padding: 2.8mm 1.6mm; }
-.etikett.quer.mit-rahmen { padding: 3.4mm 2mm; }
-.etikett.quer.mit-rahmen .rahmen { inset: 1.8mm 0.8mm; }
+.etikett.quer { padding: 1.6mm 1.2mm; }
+.etikett.quer.mit-rahmen { padding: 2.4mm 2mm; }
+.etikett.quer.mit-rahmen .rahmen { inset: 1.6mm 0.8mm; }
 .seite { position: relative; overflow: hidden; }
 .seite > .etikett.quer { position: absolute; top: 0; left: 0; transform-origin: 0 0; transform: translateX(62mm) rotate(90deg); }
 .inhalt {
@@ -143,13 +143,15 @@ summary { cursor: pointer; }
 .textspalte { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(0.5mm * var(--s)); overflow: hidden; }
 .e-zeile { --f: 1; line-height: 1.12; font-size: calc(var(--pt) * 1pt * var(--s) * var(--f)); }
 .e-eine { white-space: nowrap; overflow: hidden; }
-.e-mehr { white-space: pre-line; overflow-wrap: anywhere; }
+.e-mehr { white-space: pre-line; overflow: hidden; }
+.umbruch .e-mehr { overflow-wrap: anywhere; }
 .e-fett { font-weight: 700; }
 .e-kursiv { font-style: italic; }
 .e-mitte { text-align: center; }
 .e-rechts { text-align: right; }
 .e-trenn { border-top: 0.25mm solid #000; margin: calc(0.4mm * var(--s)) 0; }
-.e-paar { display: flex; gap: 2.5mm; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
+.e-paar { display: flex; column-gap: 2.5mm; flex-wrap: wrap; overflow: hidden; }
+.e-paar span { white-space: nowrap; }
 .e-paar span b { font-weight: 700; }
 .schrift-schreibmaschine { font-family: "Courier Prime", "Courier New", monospace; }
 .schrift-labor { font-family: "IBM Plex Mono", Consolas, monospace; }
@@ -161,7 +163,7 @@ summary { cursor: pointer; }
 .e-kasten { border: 0.4mm solid #000; padding: 0.8mm 1mm; }
 
 /* Logo */
-.e-logo { display: flex; justify-content: center; align-items: center; height: calc(var(--lh) * 1mm * var(--s) * var(--lf, 1)); margin-bottom: calc(0.6mm * var(--s)); }
+.e-logo { display: flex; justify-content: center; align-items: center; height: calc(var(--lh) * 1mm * min(var(--s), 1.8) * var(--lf, 1)); margin-bottom: calc(0.6mm * var(--s)); }
 .e-logo img { height: 100%; width: auto; max-width: 100%; object-fit: contain; }
 
 

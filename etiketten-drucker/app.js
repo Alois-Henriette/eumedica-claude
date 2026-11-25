@@ -25,10 +25,9 @@
       ],
       zeilen: function (w) {
         var z = [];
-        if (w.name) z.push(zeile(w.name, 12, 'e-eine e-fett e-mitte e-titel'));
-        if (w.zusatz || w.listenTitel) {
-          z.push(zeileHtml((w.listenTitel ? '<b>' + esc(w.listenTitel) + '</b> ' : '') + esc(w.zusatz), 6.5, 'e-mehr'));
-        }
+        if (w.name) z.push(zeile(w.name, 12, 'e-mehr e-fett e-mitte e-titel'));
+        if (w.listenTitel) z.push(zeile(w.listenTitel, 6.5, 'e-eine e-fett'));
+        if (w.zusatz) z.push(zeile(w.zusatz, 6.5, 'e-mehr'));
         var p1 = paar([['Menge', w.menge], ['LOT', w.lot]]);
         var p2 = paar([['Herg.', datumText(w.hergestellt)], ['Verw. bis', w.haltbar]]);
         if (p1 || p2) z.push('<div class="e-trenn"></div>');
@@ -333,8 +332,12 @@
     var stapel = etikett.querySelector('.stapel');
     var s = 1;
     inhalt.style.setProperty('--s', s);
-    var einzeilig = etikett.querySelectorAll('.e-eine, .e-paar');
+    var einzeilig = etikett.querySelectorAll('.e-eine');
+    // Einzeilige Texte (Titel usw.) dürfen sich etwas verkleinern, aber nur bis minF,
+    // damit die Rangfolge der Schriftgrößen erhalten bleibt.
+    var minF = 0.8;
     function breiteEinpassen() {
+      var ok = true;
       einzeilig.forEach(function (el) {
         var f = 1;
         el.style.setProperty('--f', f);
@@ -342,7 +345,9 @@
           f -= 0.03;
           el.style.setProperty('--f', f.toFixed(3));
         }
+        if (f < minF || el.scrollWidth > el.clientWidth + 0.5) ok = false;
       });
+      return ok;
     }
     function logoEinpassen() {
       etikett.querySelectorAll('.e-logo').forEach(function (el) {
@@ -355,13 +360,32 @@
         }
       });
     }
-    breiteEinpassen();
-    logoEinpassen();
-    while (stapel.offsetHeight > spalte.clientHeight + 0.5 && s > 0.35) {
-      s -= 0.03;
-      inhalt.style.setProperty('--s', s.toFixed(3));
-      breiteEinpassen();
+    var mehrzeilig = etikett.querySelectorAll('.e-mehr, .e-paar');
+    // Passt alles bei Schriftfaktor s? (Höhe reicht, kein Wort ragt seitlich hinaus)
+    function passt(wert) {
+      inhalt.style.setProperty('--s', wert.toFixed(3));
+      var breiteOk = breiteEinpassen();
       logoEinpassen();
+      if (!breiteOk) return false;
+      if (stapel.offsetHeight > spalte.clientHeight + 0.5) return false;
+      for (var i = 0; i < mehrzeilig.length; i++) {
+        if (mehrzeilig[i].scrollWidth > mehrzeilig[i].clientWidth + 0.5) return false;
+      }
+      return true;
+    }
+    // Größten Faktor suchen, damit der Text das Etikett möglichst ausfüllt.
+    var lo = 0.3, hi = 3.5;
+    if (passt(1)) lo = 1; else hi = 1;
+    for (var n = 0; n < 12; n++) {
+      var mitte = (lo + hi) / 2;
+      if (passt(mitte)) lo = mitte; else hi = mitte;
+    }
+    s = lo;
+    if (!passt(s)) {
+      // Selbst ganz klein passt es nicht: Titel stärker verkleinern, lange Wörter umbrechen.
+      minF = 0;
+      etikett.classList.add('umbruch');
+      passt(s);
     }
     return s;
   }
