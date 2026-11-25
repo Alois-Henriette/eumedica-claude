@@ -109,7 +109,8 @@
       return ganz;
     });
   }
-  function $(id) { return document.getElementById(id); }
+  // Fehlt ein Element (z. B. alte Seite noch im Browser-Cache), wird ein leeres Ersatz-Element geliefert.
+  function $(id) { return document.getElementById(id) || document.createElement('div'); }
 
   // ---------- Zustand ----------
   var zustand = {
@@ -367,6 +368,13 @@
 
   // ---------- Vorschau ----------
   function aktualisieren() {
+    try {
+      aktualisierenIntern();
+    } catch (e) {
+      $('vorschauInfo').textContent = 'Die Vorschau konnte nicht erstellt werden. Bitte Seite neu laden (Cmd+Shift+R bzw. Strg+F5). Fehler: ' + e.message;
+    }
+  }
+  function aktualisierenIntern() {
     $('freiHoeheLabel').hidden = zustand.hoehe !== 'frei';
     $('logoHinweis').hidden = !(zustand.logoArt === 'bild' && !zustand.logoBild);
     $('logoDateiLabel').hidden = zustand.logoArt !== 'bild';
