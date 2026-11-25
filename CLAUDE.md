@@ -4,7 +4,7 @@
 - Mit dem Nutzer immer auf **Deutsch** kommunizieren, kurz und ohne Fachjargon.
 
 ## Deployment (immer selbst erledigen)
-- Die Apps laufen über **GitHub Pages** aus dem Branch `main` (Ordner `/` root):
+- Die Apps laufen über **GitHub Pages** (Quelle: GitHub Actions, Workflow `.github/workflows/pages.yml`, startet bei jedem Push auf `main`):
   https://alois-henriette.github.io/eumedica-claude/
 - Nach jeder fertigen und getesteten Änderung **selbst nach `main` pushen**. Damit ist das Deployment erledigt, GitHub Pages veröffentlicht automatisch in 1–2 Minuten.
 - Der Nutzer hat ausdrücklich gewünscht, dass Claude das Deployment immer übernimmt. Nicht nachfragen, nicht auf einem separaten Branch liegen lassen.
