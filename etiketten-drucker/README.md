@@ -7,7 +7,7 @@ Die App läuft komplett im Browser. Sie braucht keine Installation und kein Inte
 
 | Art | Standard-Format | Inhalt |
 |---|---|---|
-| **Braunfläschchen** | 60 mm breit × 62 mm hoch (quer gedruckt, Breite wählbar) | Logo, Titel, Inhaltsstoffe, Menge, LOT, Datum, Hinweis |
+| **Braunfläschchen** | fest 60 mm breit × 62 mm hoch (quer gedruckt) | Logo, Titel, Inhaltsstoffe, Menge, LOT, Datum, Hinweis |
 | **Paketversand** | 62 × 100 mm | Logo, Absenderzeile, Empfänger, Hinweis (z. B. „Vorsicht Glas“) |
 | **Freitext** | 62 × 30 mm | Überschrift und beliebiger Text |
 

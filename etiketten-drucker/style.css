@@ -87,6 +87,9 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--akzent); ou
 .umschalter button:hover { color: var(--text); }
 .umschalter button[aria-pressed="true"] { background: var(--akzent); color: var(--akzent-text); }
 .warnung { color: #c0392b; }
+.festformat { margin: 0 0 12px; }
+details.mehr { margin-top: 4px; }
+details.mehr summary { font-size: 13px; color: var(--leise); margin-bottom: 10px; }
 .tipp { font-size: 12px; color: var(--leise); margin: 6px 0 0; }
 code { font-size: 12px; }
 .drucken {
