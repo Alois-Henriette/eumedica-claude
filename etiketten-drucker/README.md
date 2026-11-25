@@ -34,11 +34,11 @@ Falls die Etikettenlänge nicht stimmt: In den Druckeinstellungen des Brother-Tr
 
 ## Funktionen
 
-- **Logo**: eingebautes „Alois & Henriette group“-Logo oder eigene Logodatei (PNG/JPG/SVG). Farben werden automatisch in Schwarz umgewandelt, weil der Drucker nur Schwarz druckt.
+- **Logo**: Original-Logo „Alois & Henriette group“ (`logo.jpg`, Druckversion `logo-druck.png`) oder eigene Logodatei (PNG/JPG/SVG). Farben werden automatisch in Schwarz umgewandelt, weil der Drucker nur Schwarz druckt.
 - **Laborschrift**: Schreibmaschine (Courier Prime), technisch (IBM Plex Mono) oder Arial.
 - **Automatisches Einpassen**: Zu langer Text wird verkleinert, bis er auf das Etikett passt.
 - **Serien**: Mehrere Etiketten auf einmal, mit fortlaufender Nummer `{nr}` (z. B. für LOT-Nummern). `{datum}` setzt das heutige Datum ein.
 
 ## Lizenzen
 
-Schriften: Courier Prime, IBM Plex Mono, Great Vibes (SIL Open Font License, siehe `fonts/`).
+Schriften: Courier Prime, IBM Plex Mono (SIL Open Font License, siehe `fonts/`).

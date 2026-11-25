@@ -115,7 +115,7 @@
   var zustand = {
     vorlage: 'flaeschchen',
     werte: {},
-    logoArt: 'text',      // 'text' | 'bild' | 'kein'
+    logoArt: 'original',  // 'original' | 'bild' | 'kein'
     logoBild: '',         // Data-URL einer hochgeladenen Datei
     logoGroesse: '6',     // Höhe in mm
     schrift: 'schreibmaschine',
@@ -131,6 +131,7 @@
     if (gespeichert && typeof gespeichert === 'object') Object.assign(zustand, gespeichert);
   } catch (e) { /* ohne Speicher weiterarbeiten */ }
   if (!VORLAGEN[zustand.vorlage]) zustand.vorlage = 'flaeschchen';
+  if (zustand.logoArt === 'text') zustand.logoArt = 'original';
   // Das Format wird je Etiketten-Art getrennt gemerkt.
   var PRO_VORLAGE = ['hoehe', 'freiHoehe'];
   zustand.proVorlage = zustand.proVorlage || {};
@@ -277,10 +278,8 @@
     if (zustand.logoArt === 'bild' && zustand.logoBild) {
       return '<div class="e-logo"' + stil + '><img alt="" src="' + esc(zustand.logoBild) + '"></div>';
     }
-    if (zustand.logoArt === 'text') {
-      return '<div class="e-logo"' + stil + '><div class="logo-text">' +
-        '<span class="l-alois">Alois &amp;</span><span class="l-henriette">Henriette</span>' +
-        '<span class="l-group">group</span></div></div>';
+    if (zustand.logoArt === 'original') {
+      return '<div class="e-logo"' + stil + '><img alt="Alois & Henriette group" src="logo-druck.png"></div>';
     }
     return '';
   }
@@ -364,6 +363,7 @@
   function aktualisieren() {
     $('freiHoeheLabel').hidden = zustand.hoehe !== 'frei';
     $('logoHinweis').hidden = !(zustand.logoArt === 'bild' && !zustand.logoBild);
+    $('logoDateiLabel').hidden = zustand.logoArt !== 'bild';
     var h = hoeheMm();
     $('masse').textContent = '· ' + BREITE_MM + ' × ' + h + ' mm';
     $('seitenformat').textContent = '@page { size: ' + BREITE_MM + 'mm ' + h + 'mm; margin: 0; }';
@@ -404,7 +404,11 @@
       bereich.appendChild(e);
       einpassen(e);
     }
-    window.print();
+    // Erst drucken, wenn alle Logo-Bilder geladen sind.
+    var bilder = Array.prototype.map.call(bereich.querySelectorAll('img'), function (img) {
+      return img.decode ? img.decode().catch(function () {}) : Promise.resolve();
+    });
+    Promise.all(bilder).then(function () { window.print(); });
   }
   window.addEventListener('afterprint', function () { $('druckbereich').innerHTML = ''; });
 
@@ -416,8 +420,7 @@
   // Schriften vorab laden, danach neu einpassen (Textbreiten ändern sich mit der Schrift).
   if (document.fonts && document.fonts.load) {
     Promise.all(['400 10px "Courier Prime"', '700 10px "Courier Prime"', 'italic 400 10px "Courier Prime"',
-      '400 10px "IBM Plex Mono"', '700 10px "IBM Plex Mono"', 'italic 400 10px "IBM Plex Mono"',
-      '400 10px "Great Vibes"'].map(function (f) { return document.fonts.load(f).catch(function () {}); }))
+      '400 10px "IBM Plex Mono"', '700 10px "IBM Plex Mono"', 'italic 400 10px "IBM Plex Mono"'].map(function (f) { return document.fonts.load(f).catch(function () {}); }))
       .then(aktualisieren);
   }
 })();
