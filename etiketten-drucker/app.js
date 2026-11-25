@@ -1,0 +1,423 @@
+/* Etiketten-Drucker für Brother QL-800 mit DK-22205 (62 mm Endlosrolle).
+   Läuft komplett lokal im Browser – es werden keine Daten verschickt. */
+(function () {
+  'use strict';
+
+  var BREITE_MM = 62;
+  var SPEICHER_KEY = 'etiketten-drucker-v1';
+
+  // ---------- Vorlagen ----------
+  var VORLAGEN = {
+    flaeschchen: {
+      titel: 'Braunfläschchen',
+      einstellungen: { hoehe: '38' },
+      felder: [
+        { id: 'name', label: 'Titel', placeholder: 'z. B. Arnika-Öl', standard: 'Arnika-Öl' },
+        { id: 'listenTitel', label: 'Überschrift der Liste', placeholder: 'z. B. Inhaltsstoffe:', standard: 'Inhaltsstoffe:' },
+        { id: 'zusatz', label: 'Inhaltsstoffe / Zutaten', typ: 'textarea',
+          placeholder: 'z. B. Mandelöl*, Arnikablüten-Auszug*, Vitamin E\n* aus kontrolliert biologischem Anbau',
+          standard: 'Mandelöl*, Arnikablüten-Auszug*, Tocopherol (Vitamin E)' },
+        { id: 'menge', label: 'Menge', placeholder: 'z. B. 10 ml', standard: '10 ml', halb: true },
+        { id: 'lot', label: 'Charge / LOT', placeholder: 'z. B. 2611-{nr}', halb: true },
+        { id: 'hergestellt', label: 'Hergestellt am', typ: 'date', standard: 'heute', halb: true },
+        { id: 'haltbar', label: 'Verwendbar bis', placeholder: 'z. B. 11/2027', halb: true },
+        { id: 'hinweis', label: 'Hinweis', placeholder: 'z. B. Vor Licht geschützt lagern' }
+      ],
+      zeilen: function (w) {
+        var z = [];
+        if (w.name) z.push(zeile(w.name, 12, 'e-eine e-fett e-mitte e-titel'));
+        if (w.zusatz || w.listenTitel) {
+          z.push(zeileHtml((w.listenTitel ? '<b>' + esc(w.listenTitel) + '</b> ' : '') + esc(w.zusatz), 6.5, 'e-mehr'));
+        }
+        var p1 = paar([['Menge', w.menge], ['LOT', w.lot]]);
+        var p2 = paar([['Herg.', datumText(w.hergestellt)], ['Verw. bis', w.haltbar]]);
+        if (p1 || p2) z.push('<div class="e-trenn"></div>');
+        if (p1) z.push(zeileHtml(p1, 6.5, 'e-paar'));
+        if (p2) z.push(zeileHtml(p2, 6.5, 'e-paar'));
+        if (w.hinweis) z.push(zeile(w.hinweis, 6, 'e-mehr e-kursiv'));
+        return z;
+      }
+    },
+    paket: {
+      titel: 'Paketversand',
+      einstellungen: { hoehe: '100' },
+      felder: [
+        { id: 'absender', label: 'Absender (eine Zeile)', placeholder: 'z. B. Alois & Henriette group · Musterstr. 1 · 8000 Zürich',
+          standard: 'Alois & Henriette group · Musterstrasse 1 · 8000 Zürich' },
+        { id: 'empfaenger', label: 'Empfänger', typ: 'textarea',
+          placeholder: 'Name\nStrasse Nr.\nPLZ Ort\nLand' },
+        { id: 'hinweis', label: 'Hinweis auf dem Paket', placeholder: 'z. B. Vorsicht Glas – nicht stürzen',
+          standard: 'Vorsicht Glas' }
+      ],
+      zeilen: function (w) {
+        var z = [];
+        if (w.absender) z.push(zeile('Abs.: ' + w.absender, 6.5, 'e-eine e-absender'));
+        if (w.empfaenger) z.push(zeile(w.empfaenger, 13, 'e-mehr e-empfaenger'));
+        if (w.hinweis) z.push(zeile(w.hinweis, 10, 'e-eine e-fett e-mitte e-kasten'));
+        return z;
+      }
+    },
+    freitext: {
+      titel: 'Freitext',
+      einstellungen: { hoehe: '30' },
+      felder: [
+        { id: 'ueberschrift', label: 'Überschrift', placeholder: 'z. B. Muster' },
+        { id: 'text', label: 'Text', typ: 'textarea', placeholder: 'Beliebiger Text, mehrere Zeilen möglich' },
+        { id: 'groesse', label: 'Schriftgröße', typ: 'select', halb: true, standard: '9',
+          optionen: [['7', 'Klein'], ['9', 'Mittel'], ['12', 'Groß'], ['16', 'Sehr groß']] },
+        { id: 'ausrichtung', label: 'Ausrichtung', typ: 'select', halb: true, standard: 'e-mitte',
+          optionen: [['', 'Links'], ['e-mitte', 'Zentriert'], ['e-rechts', 'Rechts']] }
+      ],
+      zeilen: function (w) {
+        var z = [];
+        var pt = parseFloat(w.groesse) || 9;
+        if (w.ueberschrift) z.push(zeile(w.ueberschrift, pt * 1.35, 'e-eine e-fett ' + w.ausrichtung));
+        if (w.text) z.push(zeile(w.text, pt, 'e-mehr ' + w.ausrichtung));
+        return z;
+      }
+    }
+  };
+
+  // ---------- Hilfsfunktionen ----------
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function zeile(text, pt, klassen) { return zeileHtml(esc(text), pt, klassen); }
+  function zeileHtml(html, pt, klassen) {
+    return '<div class="e-zeile ' + klassen + '" style="--pt:' + pt + '">' + html + '</div>';
+  }
+  function paar(liste) {
+    var teile = liste.filter(function (p) { return p[1]; })
+      .map(function (p) { return '<span>' + esc(p[0]) + ': <b>' + esc(p[1]) + '</b></span>'; });
+    return teile.join('');
+  }
+  function heuteIso() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function datumText(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    return m ? m[3] + '.' + m[2] + '.' + m[1] : (iso || '');
+  }
+  function ersetzen(text, nr, werte) {
+    return String(text || '').replace(/\{(\w+)\}/g, function (ganz, k) {
+      if (k === 'nr') return nr;
+      if (k === 'datum') return datumText(heuteIso());
+      if (werte && Object.prototype.hasOwnProperty.call(werte, k)) return werte[k];
+      return ganz;
+    });
+  }
+  function $(id) { return document.getElementById(id); }
+
+  // ---------- Zustand ----------
+  var zustand = {
+    vorlage: 'flaeschchen',
+    werte: {},
+    logoArt: 'text',      // 'text' | 'bild' | 'kein'
+    logoBild: '',         // Data-URL einer hochgeladenen Datei
+    logoGroesse: '6',     // Höhe in mm
+    schrift: 'schreibmaschine',
+    hoehe: '38',
+    freiHoehe: 35,
+    anzahl: 1,
+    start: 1,
+    stellen: 3,
+    rahmen: false
+  };
+  try {
+    var gespeichert = JSON.parse(localStorage.getItem(SPEICHER_KEY) || 'null');
+    if (gespeichert && typeof gespeichert === 'object') Object.assign(zustand, gespeichert);
+  } catch (e) { /* ohne Speicher weiterarbeiten */ }
+  if (!VORLAGEN[zustand.vorlage]) zustand.vorlage = 'flaeschchen';
+  // Das Format wird je Etiketten-Art getrennt gemerkt.
+  var PRO_VORLAGE = ['hoehe', 'freiHoehe'];
+  zustand.proVorlage = zustand.proVorlage || {};
+  Object.keys(VORLAGEN).forEach(function (k) {
+    zustand.proVorlage[k] = Object.assign({ freiHoehe: 35 }, VORLAGEN[k].einstellungen, zustand.proVorlage[k]);
+  });
+  PRO_VORLAGE.forEach(function (p) { zustand[p] = zustand.proVorlage[zustand.vorlage][p]; });
+  Object.keys(VORLAGEN).forEach(function (k) {
+    zustand.werte[k] = zustand.werte[k] || {};
+    VORLAGEN[k].felder.forEach(function (f) {
+      if (zustand.werte[k][f.id] === undefined) {
+        zustand.werte[k][f.id] = f.standard === 'heute' ? heuteIso() : (f.standard || '');
+      }
+    });
+  });
+  function speichern() {
+    PRO_VORLAGE.forEach(function (p) { zustand.proVorlage[zustand.vorlage][p] = zustand[p]; });
+    try { localStorage.setItem(SPEICHER_KEY, JSON.stringify(zustand)); } catch (e) { /* egal */ }
+  }
+
+  function hoeheMm() {
+    var h = zustand.hoehe === 'frei' ? parseFloat(zustand.freiHoehe) : parseFloat(zustand.hoehe);
+    if (!isFinite(h)) h = 30;
+    return Math.min(300, Math.max(13, h));
+  }
+
+  // ---------- Formular aufbauen ----------
+  function vorlagenTabs() {
+    var box = $('vorlagen');
+    box.innerHTML = '';
+    Object.keys(VORLAGEN).forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = VORLAGEN[k].titel;
+      b.setAttribute('aria-pressed', String(k === zustand.vorlage));
+      b.addEventListener('click', function () {
+        PRO_VORLAGE.forEach(function (p) {
+          zustand.proVorlage[zustand.vorlage][p] = zustand[p];
+          zustand[p] = zustand.proVorlage[k][p];
+          var el = $(p);
+          if (el) el.value = zustand[p];
+        });
+        zustand.vorlage = k;
+        speichern();
+        vorlagenTabs();
+        felderBauen();
+        aktualisieren();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function felderBauen() {
+    var box = $('felder');
+    box.innerHTML = '';
+    var werte = zustand.werte[zustand.vorlage];
+    var reihe = null;
+    VORLAGEN[zustand.vorlage].felder.forEach(function (f) {
+      var label = document.createElement('label');
+      label.appendChild(document.createTextNode(f.label));
+      var el;
+      if (f.typ === 'textarea') {
+        el = document.createElement('textarea');
+        el.rows = 2;
+      } else if (f.typ === 'select') {
+        el = document.createElement('select');
+        f.optionen.forEach(function (o) {
+          var opt = document.createElement('option');
+          opt.value = o[0]; opt.textContent = o[1];
+          el.appendChild(opt);
+        });
+      } else {
+        el = document.createElement('input');
+        el.type = f.typ === 'date' ? 'date' : 'text';
+      }
+      if (f.placeholder) el.placeholder = f.placeholder;
+      el.value = werte[f.id];
+      el.addEventListener('input', function () {
+        werte[f.id] = el.value;
+        speichern();
+        aktualisieren();
+      });
+      label.appendChild(el);
+      if (f.halb) {
+        if (!reihe) { reihe = document.createElement('div'); reihe.className = 'zeile'; box.appendChild(reihe); }
+        reihe.appendChild(label);
+        if (reihe.children.length === 2) reihe = null;
+      } else {
+        reihe = null;
+        box.appendChild(label);
+      }
+    });
+  }
+
+  function einstellungenVerbinden() {
+    $('logoDatei').addEventListener('change', function (ev) {
+      if (ev.target.files && ev.target.files[0]) logoLaden(ev.target.files[0]);
+      ev.target.value = '';
+    });
+    [['logoArt', 'value'], ['logoGroesse', 'value'], ['schrift', 'value'], ['hoehe', 'value'], ['freiHoehe', 'value'],
+     ['anzahl', 'value'], ['start', 'value'], ['stellen', 'value'], ['rahmen', 'checked']].forEach(function (p) {
+      var el = $(p[0]);
+      el[p[1]] = zustand[p[0]];
+      var ev = el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input';
+      el.addEventListener(ev, function () {
+        zustand[p[0]] = el[p[1]];
+        speichern();
+        aktualisieren();
+      });
+    });
+    $('drucken').addEventListener('click', drucken);
+    window.addEventListener('resize', vorschauSkalieren);
+  }
+
+  // ---------- Etikett erzeugen ----------
+  function nummer(i) {
+    var n = (parseInt(zustand.start, 10) || 0) + i;
+    var stellen = Math.min(8, Math.max(1, parseInt(zustand.stellen, 10) || 1));
+    return String(n).padStart(stellen, '0');
+  }
+
+  function etikettErzeugen(i) {
+    var nr = nummer(i);
+    var roh = zustand.werte[zustand.vorlage];
+    var werte = {};
+    Object.keys(roh).forEach(function (k) { werte[k] = ersetzen(roh[k], nr, null); });
+
+    var div = document.createElement('div');
+    div.className = 'etikett schrift-' + zustand.schrift + (zustand.rahmen ? ' mit-rahmen' : '');
+    div.style.height = hoeheMm() + 'mm';
+
+    var html = zustand.rahmen ? '<div class="rahmen"></div>' : '';
+    html += '<div class="inhalt"><div class="textspalte"><div class="stapel">' +
+      logoHtml() +
+      VORLAGEN[zustand.vorlage].zeilen(werte).join('') +
+      '</div></div></div>';
+    div.innerHTML = html;
+    return div;
+  }
+
+  function logoHtml() {
+    var h = parseFloat(zustand.logoGroesse) || 6;
+    var stil = ' style="--lh:' + h + '"';
+    if (zustand.logoArt === 'bild' && zustand.logoBild) {
+      return '<div class="e-logo"' + stil + '><img alt="" src="' + esc(zustand.logoBild) + '"></div>';
+    }
+    if (zustand.logoArt === 'text') {
+      return '<div class="e-logo"' + stil + '><div class="logo-text">' +
+        '<span class="l-alois">Alois &amp;</span><span class="l-henriette">Henriette</span>' +
+        '<span class="l-group">group</span></div></div>';
+    }
+    return '';
+  }
+
+  // Hochgeladenes Logo verkleinern und in Graustufen umwandeln (Drucker druckt nur Schwarz).
+  function logoLaden(datei) {
+    var leser = new FileReader();
+    leser.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var max = 900;
+        var f = Math.min(1, max / Math.max(img.width, img.height));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.width * f);
+        c.height = Math.round(img.height * f);
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        var px = ctx.getImageData(0, 0, c.width, c.height);
+        var d = px.data;
+        for (var i = 0; i < d.length; i += 4) {
+          var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          // Farbige Teile (z. B. Türkis) kräftig abdunkeln, damit sie schwarz gedruckt werden
+          var v = g > 235 ? 255 : Math.max(0, Math.round((g - 120) * 1.4));
+          d[i] = d[i + 1] = d[i + 2] = v;
+        }
+        ctx.putImageData(px, 0, 0);
+        zustand.logoBild = c.toDataURL('image/png');
+        zustand.logoArt = 'bild';
+        $('logoArt').value = 'bild';
+        speichern();
+        aktualisieren();
+      };
+      img.src = leser.result;
+    };
+    leser.readAsDataURL(datei);
+  }
+
+  // Text verkleinern, bis alles auf das Etikett passt (Element muss im DOM sein).
+  function einpassen(etikett) {
+    var inhalt = etikett.querySelector('.inhalt');
+    var spalte = etikett.querySelector('.textspalte');
+    var stapel = etikett.querySelector('.stapel');
+    var s = 1;
+    inhalt.style.setProperty('--s', s);
+    var einzeilig = etikett.querySelectorAll('.e-eine, .e-paar');
+    function breiteEinpassen() {
+      einzeilig.forEach(function (el) {
+        var f = 1;
+        el.style.setProperty('--f', f);
+        while (el.scrollWidth > el.clientWidth + 0.5 && f > 0.4) {
+          f -= 0.03;
+          el.style.setProperty('--f', f.toFixed(3));
+        }
+      });
+    }
+    function logoEinpassen() {
+      etikett.querySelectorAll('.e-logo').forEach(function (el) {
+        var innen = el.firstChild;
+        var f = 1;
+        el.style.setProperty('--lf', f);
+        while (innen.offsetWidth > el.clientWidth + 0.5 && f > 0.3) {
+          f -= 0.03;
+          el.style.setProperty('--lf', f.toFixed(3));
+        }
+      });
+    }
+    breiteEinpassen();
+    logoEinpassen();
+    while (stapel.offsetHeight > spalte.clientHeight + 0.5 && s > 0.35) {
+      s -= 0.03;
+      inhalt.style.setProperty('--s', s.toFixed(3));
+      breiteEinpassen();
+      logoEinpassen();
+    }
+    return s;
+  }
+
+  // ---------- Vorschau ----------
+  function aktualisieren() {
+    $('freiHoeheLabel').hidden = zustand.hoehe !== 'frei';
+    $('logoHinweis').hidden = !(zustand.logoArt === 'bild' && !zustand.logoBild);
+    var h = hoeheMm();
+    $('masse').textContent = '· ' + BREITE_MM + ' × ' + h + ' mm';
+    $('seitenformat').textContent = '@page { size: ' + BREITE_MM + 'mm ' + h + 'mm; margin: 0; }';
+
+    var box = $('vorschauSkala');
+    box.innerHTML = '';
+    var e = etikettErzeugen(0);
+    box.appendChild(e);
+    vorschauSkalieren();
+    var s = einpassen(e);
+
+    var anzahl = Math.max(1, parseInt(zustand.anzahl, 10) || 1);
+    var info = anzahl === 1 ? '1 Etikett wird gedruckt.' : anzahl + ' Etiketten werden gedruckt.';
+    var nutztNr = JSON.stringify(zustand.werte[zustand.vorlage]).indexOf('{nr}') >= 0;
+    if (nutztNr && anzahl > 1) info += ' Nummern ' + nummer(0) + ' bis ' + nummer(anzahl - 1) + '.';
+    if (s < 0.7) info += ' Hinweis: Der Text wurde stark verkleinert. Etikett höher wählen oder Text kürzen.';
+    $('vorschauInfo').textContent = info;
+  }
+
+  function vorschauSkalieren() {
+    var flaeche = $('vorschauFlaeche');
+    var box = $('vorschauSkala');
+    var e = box.firstChild;
+    if (!e) return;
+    box.style.zoom = 1;
+    var verfuegbar = flaeche.clientWidth - 32;
+    var faktor = Math.max(1, Math.min(3.5, verfuegbar / e.offsetWidth, 520 / e.offsetHeight));
+    box.style.zoom = faktor;
+  }
+
+  // ---------- Drucken ----------
+  function drucken() {
+    var anzahl = Math.min(500, Math.max(1, parseInt(zustand.anzahl, 10) || 1));
+    var bereich = $('druckbereich');
+    bereich.innerHTML = '';
+    for (var i = 0; i < anzahl; i++) {
+      var e = etikettErzeugen(i);
+      bereich.appendChild(e);
+      einpassen(e);
+    }
+    window.print();
+  }
+  window.addEventListener('afterprint', function () { $('druckbereich').innerHTML = ''; });
+
+  // ---------- Start ----------
+  vorlagenTabs();
+  felderBauen();
+  einstellungenVerbinden();
+  aktualisieren();
+  // Schriften vorab laden, danach neu einpassen (Textbreiten ändern sich mit der Schrift).
+  if (document.fonts && document.fonts.load) {
+    Promise.all(['400 10px "Courier Prime"', '700 10px "Courier Prime"', 'italic 400 10px "Courier Prime"',
+      '400 10px "IBM Plex Mono"', '700 10px "IBM Plex Mono"', 'italic 400 10px "IBM Plex Mono"',
+      '400 10px "Great Vibes"'].map(function (f) { return document.fonts.load(f).catch(function () {}); }))
+      .then(aktualisieren);
+  }
+})();

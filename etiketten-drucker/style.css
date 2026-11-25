@@ -1,0 +1,183 @@
+@font-face { font-family: "Courier Prime"; src: url(fonts/courier-prime-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Courier Prime"; src: url(fonts/courier-prime-latin-400-italic.woff2) format("woff2"); font-weight: 400; font-style: italic; }
+@font-face { font-family: "Courier Prime"; src: url(fonts/courier-prime-latin-700-normal.woff2) format("woff2"); font-weight: 700; font-style: normal; }
+@font-face { font-family: "Courier Prime"; src: url(fonts/courier-prime-latin-700-italic.woff2) format("woff2"); font-weight: 700; font-style: italic; }
+@font-face { font-family: "IBM Plex Mono"; src: url(fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "IBM Plex Mono"; src: url(fonts/ibm-plex-mono-latin-400-italic.woff2) format("woff2"); font-weight: 400; font-style: italic; }
+@font-face { font-family: "IBM Plex Mono"; src: url(fonts/ibm-plex-mono-latin-700-normal.woff2) format("woff2"); font-weight: 700; font-style: normal; }
+@font-face { font-family: "IBM Plex Mono"; src: url(fonts/ibm-plex-mono-latin-700-italic.woff2) format("woff2"); font-weight: 700; font-style: italic; }
+@font-face { font-family: "Great Vibes"; src: url(fonts/great-vibes-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-style: normal; }
+
+:root {
+  --bg: #f4f5f7;
+  --karte: #ffffff;
+  --text: #1d2330;
+  --leise: #5d6576;
+  --rand: #d9dce3;
+  --akzent: #1f5fae;
+  --akzent-text: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15181e;
+    --karte: #1f232b;
+    --text: #e6e8ec;
+    --leise: #9aa1ae;
+    --rand: #343a46;
+    --akzent: #5b9bea;
+    --akzent-text: #0d1117;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+header { padding: 20px 24px 4px; }
+h1 { margin: 0; font-size: 22px; }
+.untertitel { margin: 2px 0 0; color: var(--leise); }
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px 24px 32px;
+  max-width: 1200px;
+}
+@media (max-width: 860px) {
+  main { grid-template-columns: 1fr; padding: 12px 16px 24px; }
+  header { padding: 16px 16px 0; }
+}
+.karte {
+  background: var(--karte);
+  border: 1px solid var(--rand);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.klebrig { position: sticky; top: 16px; }
+h2 { margin: 0 0 10px; font-size: 15px; }
+.masse { font-weight: normal; color: var(--leise); }
+label { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--leise); margin-bottom: 10px; flex: 1; min-width: 120px; }
+label small { font-size: 11px; }
+label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--text); }
+.zeile { display: flex; gap: 12px; flex-wrap: wrap; }
+.breit { flex: 2; }
+input, select, textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--rand);
+  border-radius: 6px;
+  padding: 7px 9px;
+  width: 100%;
+}
+textarea { resize: vertical; min-height: 54px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--akzent); outline-offset: -1px; }
+.umschalter {
+  display: inline-flex; flex-wrap: wrap; gap: 4px; margin-top: 14px;
+  background: var(--karte); border: 1px solid var(--rand); border-radius: 12px; padding: 4px;
+}
+.umschalter button {
+  font: inherit; font-weight: 600; cursor: pointer;
+  border: 0; background: transparent; color: var(--leise);
+  border-radius: 9px; padding: 9px 18px;
+}
+.umschalter button:hover { color: var(--text); }
+.umschalter button[aria-pressed="true"] { background: var(--akzent); color: var(--akzent-text); }
+.warnung { color: #c0392b; }
+.tipp { font-size: 12px; color: var(--leise); margin: 6px 0 0; }
+code { font-size: 12px; }
+.drucken {
+  width: 100%; margin: 14px 0 10px; padding: 12px;
+  font: inherit; font-weight: 600; font-size: 16px;
+  background: var(--akzent); color: var(--akzent-text);
+  border: 0; border-radius: 8px; cursor: pointer;
+}
+.drucken:hover { filter: brightness(1.08); }
+details { font-size: 13px; color: var(--leise); }
+details ol { padding-left: 20px; margin: 8px 0; }
+summary { cursor: pointer; }
+
+#vorschauFlaeche {
+  background: repeating-conic-gradient(var(--bg) 0 25%, var(--karte) 0 50%) 0 0 / 16px 16px;
+  border: 1px solid var(--rand);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex; justify-content: center; align-items: center;
+  overflow: hidden;
+  min-height: 160px;
+}
+#vorschauSkala { transform-origin: center center; }
+#vorschauSkala .etikett { box-shadow: 0 1px 6px rgba(0,0,0,.35); }
+
+/* ---------- Etikett (Maße in mm, identisch für Vorschau und Druck) ---------- */
+.etikett {
+  width: 62mm;
+  background: #fff;
+  color: #000;
+  overflow: hidden;
+  position: relative;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  /* Brother-Rolle: seitlich ca. 1,5 mm nicht bedruckbar */
+  padding: 1.6mm 2.8mm;
+}
+.etikett.mit-rahmen .rahmen {
+  position: absolute; inset: 0.8mm 1.8mm;
+  border: 0.25mm solid #000; border-radius: 1.2mm;
+}
+.etikett.mit-rahmen { padding: 2mm 3.4mm; }
+.inhalt {
+  --s: 1;
+  height: 100%;
+  display: flex; gap: 2mm;
+  overflow: hidden;
+}
+.textspalte { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(0.5mm * var(--s)); overflow: hidden; }
+.e-zeile { --f: 1; line-height: 1.12; font-size: calc(var(--pt) * 1pt * var(--s) * var(--f)); }
+.e-eine { white-space: nowrap; overflow: hidden; }
+.e-mehr { white-space: pre-line; overflow-wrap: anywhere; }
+.e-fett { font-weight: 700; }
+.e-kursiv { font-style: italic; }
+.e-mitte { text-align: center; }
+.e-rechts { text-align: right; }
+.e-trenn { border-top: 0.25mm solid #000; margin: calc(0.4mm * var(--s)) 0; }
+.e-paar { display: flex; gap: 2.5mm; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
+.e-paar span b { font-weight: 700; }
+.schrift-schreibmaschine { font-family: "Courier Prime", "Courier New", monospace; }
+.schrift-labor { font-family: "IBM Plex Mono", Consolas, monospace; }
+.schrift-arial { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; }
+.stapel { display: flex; flex-direction: column; gap: calc(0.6mm * var(--s)); }
+.e-titel { letter-spacing: 0.02em; }
+.e-absender { border-bottom: 0.2mm solid #000; padding-bottom: 0.6mm; }
+.e-empfaenger { margin: calc(2mm * var(--s)) 0; font-weight: 700; line-height: 1.25; }
+.e-kasten { border: 0.4mm solid #000; padding: 0.8mm 1mm; }
+
+/* Logo */
+.e-logo { display: flex; justify-content: center; align-items: center; height: calc(var(--lh) * 1mm * var(--s) * var(--lf, 1)); margin-bottom: calc(0.6mm * var(--s)); }
+.e-logo img { height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+.logo-text {
+  display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto;
+  column-gap: 0.15em; align-items: baseline; line-height: 1;
+  font-size: calc(var(--lh) * 0.56mm * var(--s) * var(--lf, 1));
+}
+.l-alois { font-family: "Courier Prime", "Courier New", monospace; font-size: 1em; }
+.l-henriette { font-family: "Great Vibes", cursive; font-size: 1.15em; padding-left: 0.2em; }
+.l-group { grid-column: 1; font-family: "Courier Prime", "Courier New", monospace; font-size: 0.6em; padding-left: 0.1em; }
+
+
+/* ---------- Druck ---------- */
+#druckbereich { position: fixed; left: -10000px; top: 0; }
+@media print {
+  html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+  #app { display: none !important; }
+  #druckbereich { position: static; left: auto; }
+  #druckbereich .etikett { break-after: page; page-break-after: always; }
+  #druckbereich .etikett:last-child { break-after: auto; page-break-after: auto; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+[hidden] { display: none !important; }
+label.check input { width: auto; margin: 0; }
