@@ -410,20 +410,10 @@
         etikett.dataset.hoehe = h;
         return AUTO_S;
       }
-      // Zu kurz: Mindestlänge nehmen und die Schrift vergrößern, bis das Etikett gefüllt ist.
-      etikett.classList.remove('umbruch');
+      // Zu kurz: Mindestlänge nehmen, Schrift bleibt gleich groß, Text steht oben.
       etikett.style.height = MIN_LAENGE + 'mm';
       etikett.dataset.hoehe = MIN_LAENGE;
-      inhalt.style.height = '100%';
-      spalte.style.height = '100%';
-      minF = 0.8;
-      var lo = AUTO_S, hi = 4;
-      for (var k = 0; k < 12; k++) {
-        var mid = (lo + hi) / 2;
-        if (passt(mid)) lo = mid; else hi = mid;
-      }
-      passt(lo);
-      return lo;
+      return AUTO_S;
     }
     // Größten Faktor suchen, damit der Text das Etikett möglichst ausfüllt.
     var lo = 0.3, hi = 3.5;
