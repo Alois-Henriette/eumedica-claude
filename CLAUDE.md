@@ -13,7 +13,7 @@
 
 ## Etiketten-Drucker (`etiketten-drucker/`)
 - Drucker: Brother QL-800, Rolle DK-22205 (62 mm Endlos, nur Schwarz).
-- Braunfläschchen-Etikett: festes Standardformat 60 mm breit × 62 mm hoch (quer gedruckt), nicht verstellbar (Nutzerwunsch). Text füllt das Etikett, schmale Ränder oben/unten. Bedienung so einfach wie möglich halten.
+- Braunfläschchen-Etikett: Breite fest (Rolle 62 mm, bedruckt ca. 59 mm), nicht verstellbar. Höhe automatisch je nach Menge der Inhaltsstoffe, feste Schriftgröße, Titel immer einzeilig, schmale Ränder oben/unten (Nutzerwunsch). Bedienung so einfach wie möglich halten.
 - Reines HTML/CSS/JS ohne Build-Schritt und ohne externe Abhängigkeiten. Schriften liegen lokal in `fonts/`.
 - Neue Etiketten-Arten in `app.js` unter `VORLAGEN` ergänzen (erscheinen automatisch im Umschalter).
 - Kein QR-Code und kein Barcode (vom Nutzer nicht gewünscht).

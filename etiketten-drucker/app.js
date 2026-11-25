@@ -10,8 +10,9 @@
   var VORLAGEN = {
     flaeschchen: {
       titel: 'Braunfläschchen',
-      // Festes Standardformat für Flaschen: 60 mm breit × 62 mm hoch (quer gedruckt)
-      einstellungen: { ausrichtung: 'quer', hoehe: '60', fest: true },
+      // Standard für Flaschen: Breite fest (Rolle 62 mm, bedruckt ca. 59 mm),
+      // Höhe passt sich automatisch an die Menge der Inhaltsstoffe an.
+      einstellungen: { ausrichtung: 'hoch', hoehe: '40', fest: true, auto: true },
       felder: [
         { id: 'name', label: 'Titel', placeholder: 'z. B. Arnika-Öl', standard: 'Arnika-Öl' },
         { id: 'listenTitel', label: 'Überschrift der Liste', placeholder: 'z. B. Inhaltsstoffe:', standard: 'Inhaltsstoffe:' },
@@ -26,7 +27,7 @@
       ],
       zeilen: function (w) {
         var z = [];
-        if (w.name) z.push(zeile(w.name, 12, 'e-mehr e-fett e-mitte e-titel'));
+        if (w.name) z.push(zeile(w.name, 12, 'e-eine e-fett e-mitte e-titel'));
         if (w.listenTitel) z.push(zeile(w.listenTitel, 6.5, 'e-eine e-fett'));
         if (w.zusatz) z.push(zeile(w.zusatz, 6.5, 'e-mehr'));
         var p1 = paar([['Menge', w.menge], ['LOT', w.lot]]);
@@ -158,7 +159,11 @@
   function format() { return VORLAGEN[zustand.vorlage].einstellungen; }
   function istQuer() { return format().ausrichtung === 'quer'; }
 
+  var AUTO_S = 1.4;          // feste Schriftgröße bei automatischer Höhe
+  var letzteAutoHoehe = 40;  // zuletzt gemessene Höhe in mm
+
   function hoeheMm() {
+    if (format().auto) return letzteAutoHoehe;
     if (format().fest) return parseFloat(format().hoehe);
     var h = zustand.hoehe === 'frei' ? parseFloat(zustand.freiHoehe) : parseFloat(zustand.hoehe);
     if (!isFinite(h)) h = 30;
@@ -270,8 +275,13 @@
     div.className = 'etikett schrift-' + zustand.schrift + (zustand.rahmen ? ' mit-rahmen' : '');
     var quer = istQuer();
     if (quer) div.classList.add('quer');
-    div.style.width = (quer ? hoeheMm() : BREITE_MM) + 'mm';
-    div.style.height = (quer ? BREITE_MM : hoeheMm()) + 'mm';
+    if (format().auto) {
+      div.classList.add('auto');
+      div.style.width = BREITE_MM + 'mm';
+    } else {
+      div.style.width = (quer ? hoeheMm() : BREITE_MM) + 'mm';
+      div.style.height = (quer ? BREITE_MM : hoeheMm()) + 'mm';
+    }
 
     var html = zustand.rahmen ? '<div class="rahmen"></div>' : '';
     html += '<div class="inhalt"><div class="textspalte"><div class="stapel">' +
@@ -349,7 +359,9 @@
           f -= 0.03;
           el.style.setProperty('--f', f.toFixed(3));
         }
-        if (f < minF || el.scrollWidth > el.clientWidth + 0.5) ok = false;
+        // Der Titel darf stärker schrumpfen (bleibt aber größer als der übrige Text).
+        var grenze = el.classList.contains('e-titel') ? Math.min(minF, 0.62) : minF;
+        if (f < grenze || el.scrollWidth > el.clientWidth + 0.5) ok = false;
       });
       return ok;
     }
@@ -365,6 +377,21 @@
       });
     }
     var mehrzeilig = etikett.querySelectorAll('.e-mehr, .e-paar');
+    if (etikett.classList.contains('auto')) {
+      // Feste Schriftgröße; Höhe = Inhalt + schmaler Rand.
+      minF = 0;
+      inhalt.style.setProperty('--s', AUTO_S);
+      breiteEinpassen();
+      logoEinpassen();
+      for (var m = 0; m < mehrzeilig.length; m++) {
+        if (mehrzeilig[m].scrollWidth > mehrzeilig[m].clientWidth + 0.5) etikett.classList.add('umbruch');
+      }
+      var mm = etikett.getBoundingClientRect().height * 25.4 / 96;
+      var h = Math.max(13, Math.ceil(mm * 2) / 2);
+      etikett.style.height = h + 'mm';
+      etikett.dataset.hoehe = h;
+      return AUTO_S;
+    }
     // Passt alles bei Schriftfaktor s? (Höhe reicht, kein Wort ragt seitlich hinaus)
     function passt(wert) {
       inhalt.style.setProperty('--s', wert.toFixed(3));
@@ -406,25 +433,29 @@
     $('freiHoeheLabel').hidden = zustand.hoehe !== 'frei' || !!format().fest;
     $('logoHinweis').hidden = !(zustand.logoArt === 'bild' && !zustand.logoBild);
     $('logoDateiLabel').hidden = zustand.logoArt !== 'bild';
-    var h = hoeheMm();
     var quer = istQuer();
     $('festFormat').hidden = !format().fest;
     $('formatWahl').hidden = !!format().fest;
-    $('masse').textContent = '· ' + (quer ? h + ' mm breit × ' + BREITE_MM + ' mm hoch' : BREITE_MM + ' mm breit × ' + h + ' mm hoch');
-    $('seitenformat').textContent = '@page { size: ' + BREITE_MM + 'mm ' + h + 'mm; margin: 0; }';
 
     var box = $('vorschauSkala');
     box.innerHTML = '';
+    box.style.zoom = 1; // ohne Zoom messen
     var e = etikettErzeugen(0);
     box.appendChild(e);
-    vorschauSkalieren();
     var s = einpassen(e);
+    if (format().auto) letzteAutoHoehe = parseFloat(e.dataset.hoehe) || 40;
+    vorschauSkalieren();
+
+    var h = hoeheMm();
+    $('masse').textContent = '· ' + (quer ? h + ' mm breit × ' + BREITE_MM + ' mm hoch' :
+      BREITE_MM + ' mm breit × ' + h + ' mm hoch' + (format().auto ? ' (automatisch)' : ''));
+    $('seitenformat').textContent = '@page { size: ' + BREITE_MM + 'mm ' + h + 'mm; margin: 0; }';
 
     var anzahl = Math.max(1, parseInt(zustand.anzahl, 10) || 1);
     var info = anzahl === 1 ? '1 Etikett wird gedruckt.' : anzahl + ' Etiketten werden gedruckt.';
     var nutztNr = JSON.stringify(zustand.werte[zustand.vorlage]).indexOf('{nr}') >= 0;
     if (nutztNr && anzahl > 1) info += ' Nummern ' + nummer(0) + ' bis ' + nummer(anzahl - 1) + '.';
-    if (s < 0.7) info += ' Hinweis: Der Text wurde stark verkleinert. Etikett größer wählen oder Text kürzen.';
+    if (s < 0.7 && !format().auto) info += ' Hinweis: Der Text wurde stark verkleinert. Etikett größer wählen oder Text kürzen.';
     $('vorschauInfo').textContent = info;
   }
 
@@ -454,6 +485,14 @@
       seite.appendChild(e);
       bereich.appendChild(seite);
       einpassen(e);
+    }
+    if (format().auto) {
+      // Alle Etiketten bekommen die Höhe des längsten (eine Seitengröße pro Druckauftrag).
+      var max = 13;
+      bereich.querySelectorAll('.etikett').forEach(function (el) { max = Math.max(max, parseFloat(el.dataset.hoehe) || 13); });
+      letzteAutoHoehe = max;
+      bereich.querySelectorAll('.seite, .etikett').forEach(function (el) { el.style.height = max + 'mm'; });
+      $('seitenformat').textContent = '@page { size: ' + BREITE_MM + 'mm ' + max + 'mm; margin: 0; }';
     }
     // Erst drucken, wenn alle Logo-Bilder geladen sind.
     var bilder = Array.prototype.map.call(bereich.querySelectorAll('img'), function (img) {

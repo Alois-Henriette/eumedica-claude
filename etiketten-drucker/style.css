@@ -133,6 +133,9 @@ summary { cursor: pointer; }
 .etikett.mit-rahmen { padding: 2mm 3.4mm; }
 /* Quer gedruckt: die nicht bedruckbaren Rollenränder liegen oben und unten */
 .etikett.quer { padding: 1.6mm 1.2mm; }
+/* Automatische Höhe: Breite fest, Höhe = Inhalt; schmale Ränder oben/unten */
+.etikett.auto { height: auto; padding: 1mm 1.5mm; }
+.etikett.auto .inhalt, .etikett.auto .textspalte { height: auto; }
 .etikett.quer.mit-rahmen { padding: 2.4mm 2mm; }
 .etikett.quer.mit-rahmen .rahmen { inset: 1.6mm 0.8mm; }
 .seite { position: relative; overflow: hidden; }
